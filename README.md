@@ -1,4 +1,4 @@
-<h1 align="center">mcp-lab (MCP · LangChain · Ollama · FastAPI)</h1>
+<h1 align="center">mcp-llm-rag (MCP · LangChain · Ollama · FastAPI)</h1>
 <p align="center"><i>Six agentic-AI projects on real benchmarks, running entirely on local models</i></p>
 
 <p align="center">
@@ -34,12 +34,12 @@ negative**, and they are reported as they came out.
 
 | # | Project | Benchmark | Headline finding |
 |---|---|---|---|
-| **01** | [MCP Red-Team Platform](projects/01_mcp_redteam_platform) | self-built, 5 audit modules | The same injection payload scores **0% in one delivery vector and 100% in another** |
-| **02** | [Multi-Hop RAG Audit](projects/02_hotpotqa_multihop_rag) | HotpotQA | Retrieval finds the gold facts **83.6%** of the time, yet answer exact-match is **0.20** |
-| **03** | [Tool-Calling Accuracy](projects/03_bfcl_tool_calling) | BFCL v4 | **87.9% &rarr; 64.3%** across the fleet, 700 real calls, zero errors |
-| **04** | [SWE-bench Coding Agent](projects/04_swebench_coding_agent) | SWE-bench Lite | Both patches rejected by `git apply` - **malformed diff syntax, not wrong logic** |
-| **05** | [Hallucination Rate](projects/05_truthfulqa_hallucination) | TruthfulQA | **Chain-of-thought made every model worse.** The 7B lost **35 points** |
-| **06** | [Fact-Verification Agent](projects/06_fever_fact_verification) | FEVER | **38.3%** three-way verification against **live** Wikipedia |
+| [**01**](projects/01_mcp_redteam_platform) | [**MCP Red-Team Platform**](projects/01_mcp_redteam_platform) | self-built, 5 audit modules | The same injection payload scores **0% in one delivery vector and 100% in another** |
+| [**02**](projects/02_hotpotqa_multihop_rag) | [**Multi-Hop RAG Audit**](projects/02_hotpotqa_multihop_rag) | HotpotQA | Retrieval finds the gold facts **83.6%** of the time, yet answer exact-match is **0.20** |
+| [**03**](projects/03_bfcl_tool_calling) | [**Tool-Calling Accuracy**](projects/03_bfcl_tool_calling) | BFCL v4 | **87.9% &rarr; 64.3%** across the fleet, 700 real calls, zero errors |
+| [**04**](projects/04_swebench_coding_agent) | [**SWE-bench Coding Agent**](projects/04_swebench_coding_agent) | SWE-bench Lite | Both patches rejected by `git apply` - **malformed diff syntax, not wrong logic** |
+| [**05**](projects/05_truthfulqa_hallucination) | [**Hallucination Rate**](projects/05_truthfulqa_hallucination) | TruthfulQA | **Chain-of-thought made every model worse.** The 7B lost **35 points** |
+| [**06**](projects/06_fever_fact_verification) | [**Fact-Verification Agent**](projects/06_fever_fact_verification) | FEVER | **38.3%** three-way verification against **live** Wikipedia |
 
 Each project has its own README with the full method, complete results, and an honest
 account of what broke while building it.
@@ -171,6 +171,10 @@ not a general argument against chain of thought.*
 &#9989; All six built, tested and committed. **Every number in every README came from
 running the code.**
 
+&#9989; **164 tests** — 121 across the six projects, 43 more inside the red-team platform.
+The cross-project suite runs with no model server reachable, so a clone with no Ollama
+still gets a green run rather than a wall of connection errors.
+
 &#128308; **Pending: the larger-model comparison on projects 01, 02 and 06.**
 `qwen2.5-coder:14b` has been run on **03, 04 and 05** - the section above has those
 results, including the answer to what was the open question here: project 04's patches
@@ -188,7 +192,6 @@ The remaining three gain a **comparison row** rather than being rewritten.
 | &#128736; **[Problems hit](docs/PROBLEMS.md)** | MCP 1.x vs 2.x, a template crash, 10,000 wasted embeddings |
 | &#9888; **[Limitations](docs/LIMITATIONS.md)** | Sample sizes, single seeds, what these numbers do not show |
 | &#128640; **[Future work](docs/FUTURE.md)** | Larger models, bigger samples, the comparisons worth running |
-| &#128247; **[Screenshots](docs/SCREENSHOTS.md)** | How to capture and reference UI screenshots |
 
 ## Stack
 

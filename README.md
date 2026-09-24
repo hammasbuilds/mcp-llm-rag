@@ -70,7 +70,7 @@ misconception that TruthfulQA is built to elicit.
 
 ```mermaid
 flowchart LR
-    O["Ollama fleet<br/>2B / 3B / 7B<br/>+ nomic-embed"] --> P1["01 red-team"]
+    O["Ollama fleet<br/>2B / 3B / 7B / 14B<br/>+ nomic-embed"] --> P1["01 red-team"]
     O --> P2["02 multi-hop RAG"]
     O --> P3["03 tool calling"]
     O --> P4["04 coding agent"]
@@ -171,10 +171,11 @@ not a general argument against chain of thought.*
 &#9989; All six built, tested and committed. **Every number in every README came from
 running the code.**
 
-&#128308; **Pending: a larger-model comparison.** These results use a fleet topping out at
-7B. When a 14B model is available, each project gains a **comparison row** rather than being
-rewritten. Project **04** matters most - its patches failed on *diff formatting*, and
-whether a larger model fixes that is a real open question.
+&#128308; **Pending: the larger-model comparison on projects 01, 02 and 06.**
+`qwen2.5-coder:14b` has been run on **03, 04 and 05** - the section above has those
+results, including the answer to what was the open question here: project 04's patches
+failed on diff *formatting*, and scaling fixed the syntax without fixing the grounding.
+The remaining three gain a **comparison row** rather than being rewritten.
 
 ---
 

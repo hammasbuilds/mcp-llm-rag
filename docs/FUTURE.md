@@ -2,17 +2,26 @@
 
 [<- back to README](../README.md)
 
-## 1. A larger-model comparison across all six
+## 1. A larger-model comparison on the remaining three
 
-Every result tops out at 7B. Each project is written so a larger model adds a **comparison
-row** rather than requiring a rewrite.
+`qwen2.5-coder:14b` has since been run on **03, 04 and 05**; the
+[README section dated 2026-09-16](../README.md#2026-09-16--qwen25-coder14b-added-to-three-projects)
+carries those results. **01, 02 and 06 still top out at 7B**, and each is written so a
+larger model adds a **comparison row** rather than requiring a rewrite.
 
-**Project 04 first.** Its patches failed on diff *formatting*, not reasoning - and whether
-that is a capability problem or a prompting problem is a real open question with a cheap
-answer.
+The two questions this section used to pose have answers, and they are worth stating
+because both turned out to be more specific than the question:
 
-**Project 05 second**, because the chain-of-thought result is the one most likely to reverse
-with scale, and a reversal would be as interesting as the original finding.
+- **Project 04** was "capability or prompting?". Neither, exactly. The 3B emitted diffs
+  `git` could not parse; the 14B emits diffs that parse perfectly and cite line 1234 for
+  code at line 1042. Scaling fixed the syntax and not the grounding.
+- **Project 05** was "does chain-of-thought reverse with scale?". It does not. The 14B
+  gains 20 points over the 3B on truthfulness and tops the MC2 table, and chain-of-thought
+  still costs accuracy.
+
+**Project 02 first** of the remainder: its gap is retrieval finding the gold facts 83.6% of
+the time while exact-match sits at 0.20, which is the shape most likely to move with a
+model that can use what retrieval already handed it.
 
 ## 2. More instances for project 04
 

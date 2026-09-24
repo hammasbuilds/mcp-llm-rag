@@ -1,0 +1,42 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  redteam:
+    # Project 01 serves a real MCP server and ships the hardened/vulnerable
+    # toggle every published number in its README is measured against. Its
+    # suite is the one that decides whether those numbers mean anything, so it
+    # runs on every push.
+    #
+    # No Ollama, no GPU, no network: the tools under test are local code, and
+    # the suite is checked below to pass with OLLAMA_HOST pointed at a dead
+    # port. A security test that needs a model server to be up is a test that
+    # gets skipped on the day it matters.
+    strategy:
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: projects/01_mcp_redteam_platform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install pytest httpx
+
+      - name: Test
+        run: pytest -q
+
+      - name: Test again with no model server reachable
+        # Proves the suite is hermetic rather than quietly depending on a
+        # service that happens to be running.
+        env:
+          OLLAMA_HOST: http://127.0.0.1:1
+        run: pytest -q

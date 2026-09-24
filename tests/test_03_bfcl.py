@@ -209,6 +209,12 @@ def test_live_ollama_end_to_end_on_one_case():
     except Exception:  # noqa: BLE001
         pytest.skip("no local Ollama server reachable at 127.0.0.1:11434")
 
+    # Two separate things have to be present, and the server check above only
+    # covers one of them. On a machine with Ollama running but langchain not
+    # installed, this used to fail with ModuleNotFoundError rather than skip -
+    # a missing optional dependency reported as a broken test.
+    pytest.importorskip("langchain_ollama", reason="langchain-ollama is not installed")
+
     from bfcl_data import load_category
     from harness import call_model_on_case
     from langchain_ollama import ChatOllama

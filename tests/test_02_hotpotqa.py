@@ -186,6 +186,12 @@ def test_list_ollama_models_reachable():
 def test_answer_with_citations_end_to_end():
     import httpx
 
+    # The `live` marker covers the server being up; it does not cover the client
+    # library being installed, and this is the only test in the file that needs
+    # one. A machine with Ollama running but no langchain got ModuleNotFoundError
+    # instead of a skip.
+    pytest.importorskip("langchain_ollama", reason="langchain-ollama is not installed")
+
     from pipeline import answer_with_citations, build_chat_model, list_ollama_models, pick_chat_model
 
     with httpx.Client() as client:

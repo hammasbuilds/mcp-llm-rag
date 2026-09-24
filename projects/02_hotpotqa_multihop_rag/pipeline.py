@@ -28,8 +28,16 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import httpx
-from langchain_ollama import ChatOllama
 from pydantic import BaseModel, Field
+
+# langchain_ollama is imported inside build_chat_model(), not here.
+#
+# It is needed by exactly one function - the one that talks to a model server -
+# and importing it at module scope made the whole module unimportable without it.
+# That defeated the `live` marker this repo runs on: the scoring, normalisation
+# and similarity functions have no model in them and are meant to be testable
+# anywhere, but `pytest -m "not live"` still died at collection with
+# ModuleNotFoundError, so the tests that were supposed to always run never ran.
 
 OLLAMA_URL = "http://127.0.0.1:11434"
 EMBED_MODEL = "nomic-embed-text"
@@ -219,6 +227,8 @@ def two_hop_retrieve(
 
 
 def build_chat_model(model_name: str) -> Any:
+    from langchain_ollama import ChatOllama
+
     llm = ChatOllama(model=model_name, temperature=0)
     return llm.with_structured_output(CitedAnswer)
 

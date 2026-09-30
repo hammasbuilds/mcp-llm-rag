@@ -115,61 +115,6 @@ person, wrong exclusivity), and both a retrieval step tuned for topical similari
 verdict model that defaults to caution will tend to call them NOT ENOUGH INFO instead of
 actively catching the contradiction.
 
-## Problems hit while building this
-
-- **`fever/fever`'s loading script is dead.** `datasets` 5.x removed script-based dataset
-  loading entirely (`trust_remote_code` is rejected outright, not just deprecated), so
-  `load_dataset("fever", "v1.0", split="labelled_dev")` fails with `RuntimeError: Dataset
-  scripts are no longer supported`. Fixed by loading from the dataset's auto-generated
-  `refs/convert/parquet` branch instead (`load_dataset("fever/fever", split="validation",
-  revision="refs/convert/parquet")`), which HF builds automatically for legacy script-based
-  datasets and doesn't need a script at all.
-- **The `wiki_pages` HF config has the identical problem** (and isn't even exposed on the
-  parquet branch, which only carries `default`/`train`/`validation`/`test`), so the task
-  brief's literal suggestion (`load_dataset(..., "wiki_pages", streaming=True)`) doesn't
-  work on current `datasets` either.
-- **FEVER's own raw `wiki-pages.zip` (fever.ai) is real and reachable, but this sandbox's
-  bandwidth to it made streaming it infeasible.** Confirmed the interesting part works:
-  `fsspec`'s HTTP filesystem can open the 1.7GB zip and list/read individual shard entries
-  via HTTP range requests without downloading the whole archive (central directory listing
-  for all 109 shards took ~3s). But actually measured throughput was ~150KB/s
-  (`curl -w '%{speed_download}'` against the same URL), and decoding a single 53MB shard
-  took 113 seconds — with target titles scattered non-alphabetically across shards, a full
-  scan for ~80 titles could take hours. Abandoned in favor of fetching the same titles'
-  text from live Wikipedia instead (see Dataset section above); this is the single biggest
-  scope change from the original plan, made for a measured, documented reason rather than
-  a guess.
-- **MediaWiki's `extracts` API only returns the *full* article as plain text for one page
-  per request for anonymous callers** (`"exlimit was too large for a whole article extracts
-  request, lowered to 1"`), which silently discarded all but one page's text the first time
-  a >1-title batch was tried. Fixed by requesting `exintro=1` (lead section only), which
-  isn't subject to that limit and made batching 50 titles/request work — at the cost of only
-  having lead-section text available (see the Henry Cavill example above).
-- **FEVER encodes literal parentheses in titles as `-LRB-`/`-RRB-`** (e.g.
-  `Tom_Baker_-LRB-English_actor-RRB-`), which MediaWiki does not understand; the first
-  version of the fetcher converted this back to `(` / `)` only when reading the API
-  *response* back, not before sending the request, so bracketed titles silently 404'd.
-  Caught by testing a 9-claim sample before the full 60-claim run.
-- **A bare `print()` of a Wikipedia title crashed the run on Windows.** Some page titles
-  contain non-ASCII characters (e.g. combining diacritics), and this sandbox's Windows
-  console defaults to the legacy `cp1252` codepage, which can't encode them —
-  `UnicodeEncodeError` killed an otherwise-successful run at the very last progress line.
-  Fixed with `sys.stdout.reconfigure(encoding="utf-8", errors="replace")` in `run_eval.py`.
-- **Numeric-prefixed project folder + generic module names is a real collision risk in this
-  shared repo.** This project's own modules (`data.py`, `config.py`, ...) can't be imported
-  as a package (`06_...` isn't a valid identifier) and use plain top-level filenames that
-  five sibling `*-lab` projects in this same repo checkout also use. A naive `import
-  config` after adding this directory to `sys.path` would risk silently resolving to a
-  *different* project's `config.py` if both happened to load in the same Python process
-  (e.g. a combined `pytest` run across all projects' test files). Every module here loads
-  its siblings through a small `_sibling()` helper keyed by a project-unique
-  `sys.modules["fever06_<name>"]` name instead of a bare import, specifically to make that
-  impossible regardless of what other agents' projects do.
-- **Cold-start model load timeouts.** The very first Ollama chat call in a fresh session
-  took ~31s just to load `qwen2.5:7b-instruct` into memory (subsequent warm calls: ~2.2s),
-  which blew past an initial 120s client timeout once retrieval + embedding overhead was
-  added on top. Fixed by giving the chat client a 180s timeout.
-
 ## Running it
 
 ```bash

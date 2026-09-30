@@ -76,7 +76,7 @@ said this last one "may or may not be present" — it was). Chat model used:
 | % examples with ≥1 fabricated citation (cited something never fed) | 6% |
 | Avg. fabricated citations / example | 0.06 |
 
-### The core finding
+### Results
 
 The two citation numbers tell different stories, and that gap is the
 interesting result:
@@ -104,52 +104,6 @@ interesting result:
 In short: **citations that are shown are trustworthy (rarely fabricated),
 but they are systematically incomplete** — a plausible-looking citation
 list that quietly hides most of what the model was actually given.
-
-## Problems hit while building this (honest account)
-
-- **`load_dataset("hotpot_qa", "distractor", ...)` fails outright** on the
-  `datasets` version pinned in this project (Hugging Face deprecated
-  loading-script-based dataset repos and the old `hotpot_qa` repo's
-  `.huggingface.yaml`/script path raises `HfUriError: Repository id must be
-  'namespace/name'`). The fix was switching to the maintained parquet
-  mirror, `hotpotqa/hotpot_qa` (same config/split names, same schema).
-- **The download was much larger and slower than expected.** Even though
-  only the `validation` split was requested, `datasets` pulled both
-  `distractor` **train** parquet shards (~90k examples) in addition to
-  validation before the validation arrow cache was built — around 245MB
-  total instead of the ~20-30MB a validation-only fetch would suggest.
-  Combined with five other agents hitting the network/disk on the same
-  machine at the same time, an initial download attempt stalled for
-  several minutes at a time and was killed by an unrelated host restart
-  mid-download; it had to be resumed (Hugging Face's partial-file resume
-  handled this automatically once re-invoked) rather than restarted from
-  scratch. Once the parquet-to-arrow cache was actually built, subsequent
-  loads are instant.
-- **The most important surprise was in citation generation, not
-  retrieval.** The initial schema made `supporting_facts` an *optional*
-  field (`Field(default_factory=list)`). Against a short, hand-written test
-  prompt the model reliably populated it — but against real retrieved
-  context (up to 8 sentences, real HotpotQA phrasing with embedded quote
-  marks, repeated titles across a paragraph) the model would frequently
-  return a syntactically valid structured response with `supporting_facts`
-  omitted entirely (raw model JSON was literally `{"answer": "..."}`),
-  even though it answered correctly. Making the field required in the
-  Pydantic schema alone didn't fix it (JSON schema `required` only means
-  the key must be present, not non-empty). Adding `min_length=1` to the
-  list field — so the JSON schema constrains the model to emit at least one
-  array element — is what actually forced consistent citation output. This
-  is reported in the results as-is: the model still tends to cite only the
-  schema-minimum of one fact per answer rather than being exhaustive, which
-  is the low claimed-vs-fed recall documented above. That under-citing
-  behavior is a real, measured property of the model under this prompt —
-  not a bug we patched away.
-- **Answer exact-match (0.20) is low** relative to answer F1 (0.436),
-  consistent with the model giving a correct but differently-phrased or
-  more verbose answer (e.g. "English" vs. gold "Prussian" for a
-  narrator-inference question, or restating the question back with the
-  answer embedded) rather than the terse gold-style answer HotpotQA
-  expects. This wasn't specifically tuned/prompted for since the audit's
-  focus is the citation behavior, not maximizing answer accuracy.
 
 ## Files
 

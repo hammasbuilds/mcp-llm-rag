@@ -124,7 +124,7 @@ The gain is real and concentrated: `parallel_multiple` went 0.0% &rarr; 73.3%,
 tying the best model in the fleet. But a capability the tune does not have is
 not something size buys back.
 
-### The original 5-model finding
+### The original 5-model run
 
 **`qwen2.5:7b-instruct` is the most accurate tool-caller in the fleet at
 87.9% overall, beating the next-best model (`qwen2.5:3b-instruct`, 85.0%) by
@@ -155,58 +155,6 @@ out at 73.3% even for the best model outside qwen2.5:7b-instruct.
 ## Output
 
 ![output](docs/images/output.png)
-
-## Problems hit while building this
-
-- **`qwen2.5-coder:3b` does not reliably use Ollama's native tool-calling
-  protocol.** Despite `ollama` reporting `"tools"` in its capabilities, this
-  model's `/api/chat` response came back with an **empty `tool_calls` field**
-  on essentially every request in our sample; instead it prints a
-  JSON-looking function call as plain assistant *text content* (sometimes
-  fenced in ```` ```json ```` blocks). We added a best-effort fallback parser
-  (`harness._try_parse_content_as_calls`) that extracts a `{"name":...,
-  "arguments":...}`-shaped object from the text so this model isn't scored as
-  "produced nothing" -- every case record in `results.json` has a
-  `used_fallback_parse` flag so this is fully transparent. Concretely:
-  `qwen2.5-coder:3b` used the native `tool_calls` field on **0 of 140**
-  cases; the fallback text-parser recovered a call on 40/40 (`simple_python`),
-  40/40 (`multiple`), 18/30 (`parallel`), 19/30 (`parallel_multiple`), and
-  produced nothing parseable at all on the remaining 23 cases.
-- **That fallback text format never contains more than one call object**,
-  even when the prompt clearly asks for several (e.g. "play these two songs").
-  Every single `parallel`/`parallel_multiple` failure for this model was a
-  `call count mismatch: predicted 1 vs expected N` (or `predicted 0`) --
-  never a wrong-function or wrong-argument failure. This is a structural
-  limitation of the model's output format for this repo's tool-calling setup,
-  not a scoring-harness bug, and it's the reason `qwen2.5-coder:3b` scores
-  exactly 0% on both parallel categories while still doing reasonably well on
-  single-call categories.
-- **Cold-start latency is real and lumpy.** The first call to a
-  just-swapped-in model took 10-13s (Ollama loading weights into memory)
-  versus <1-3s once warm. `run_eval.py` evaluates one model against *all*
-  sampled cases before moving to the next (rather than interleaving models
-  per case) specifically to pay that cold-start cost once per model, and sets
-  `keep_alive="10m"` so the model doesn't unload mid-run. A per-request
-  timeout of 90s was used; the actual run had 0 timeouts/errors.
-  `qwen2.5:7b-instruct` was ~3-8x slower per call than the 3B/2B models
-  (largest weights, CPU inference), and it shows: its 140-case run alone took
-  691s of the 1544s total wall time.
-- **BFCL's own AST checker was not reused** -- it lives deep in
-  `bfcl_eval.eval_checker` inside the gorilla repo with its own dependency
-  tree and multi-turn/executable-category machinery we didn't need. We
-  reimplemented the checking logic described in the brief (name match,
-  required-arg match against BFCL's accepted-value lists including the `""`
-  optional-parameter sentinel, no hallucinated args, permutation-based
-  matching for parallel calls) from scratch in `scoring.py`, with lenient
-  numeric string/number coercion added after observing `llama3.2:3b` return
-  numeric arguments as strings (e.g. `"10"` instead of `10`). This is a
-  reasonable equivalent, not a byte-for-byte reproduction of BFCL's official
-  scorer.
-- Sample size (140 cases/model, 40/40/30/30 split) was chosen to keep the full
-  5-model run to well under 30 minutes wall time on CPU-only local Ollama,
-  rather than running the full leaderboard set (400+199+199+199 = 997 cases
-  per model, which would have taken hours for the slower models). This is a
-  deliberately reduced, clearly documented scope, not the full BFCL leaderboard.
 
 ## What's finished vs. left for follow-up
 

@@ -170,47 +170,6 @@ clarity, tool-name/description collisions alone don't move the needle;
 degrading tool selection here would likely need either a weaker model or
 deliberately ambiguous requests, both left as follow-up.
 
-## Problems hit while building this
-
-- **`mcp>=2` renamed `FastMCP` to `MCPServer`** and changed its API; this
-  project needs the classic `mcp.server.fastmcp.FastMCP` (stdio client +
-  `@tool()` decorator), so it carries its own isolated venv pinned to
-  `mcp<2` instead of the repo-root `mcp>=2` used by nothing else in this
-  file.
-- **`load_dataset("hotpot_qa", ...)` is broken** on the installed
-  `datasets`/`huggingface_hub` versions (`HfUriError` — the bare repo id
-  isn't resolvable any more); the real, current path is the namespaced
-  `hotpotqa/hotpot_qa`.
-- **Naive per-trial embedding was catastrophically wasteful.** Early runs
-  opened a fresh `ToolSet` per trial (deliberately — independent sessions are
-  what make the measurement honest), and each fresh `ToolSet` re-embedded
-  the entire ~600-document corpus from scratch via real Ollama calls. Across
-  modules 2/4/5's trial counts that was on the order of 10,000+ redundant
-  embedding calls for content that never changes. Fixed with a small
-  on-disk cache in `server/embeddings.py` keyed by (model, content hash) —
-  600 documents dropped from ~2 minutes to ~0.5 seconds on a warm cache.
-- **The first tool-poisoning payload looked broken, but wasn't a bug.**
-  Wrapping the injected instruction in a fake `<system>` tag produced a flat
-  0% attack success rate everywhere, including fully undefended — suspicious
-  enough to investigate rather than report. Switching to plain
-  "IMPORTANT INSTRUCTIONS FOR AI ASSISTANT:"-style imperative text (closer to
-  how real prompt-injection payloads are written) immediately produced real
-  compliance in module 4's document-content variant. Module 2's
-  tool-*description* variant stayed at 0% even after that change and after
-  swapping the injected target to a more business-plausible file — so the
-  final, real finding is that injection vector (tool metadata vs. tool
-  output) mattered more here than payload wording, which was not the
-  original hypothesis.
-- **An unrelated sibling process's `taskkill //F //IM python.exe` (from a
-  different project being built in parallel in this same repo checkout)
-  killed background evaluation runs partway through** on more than one
-  occasion during this build, including this project's own dependency
-  install once. Nothing here was lost permanently, but it's why some runs in
-  the build history needed a restart or a rerun.
-
-
----
-
 ## How it works
 
 ```mermaid

@@ -75,7 +75,7 @@ rather than re-run, and is kept alongside `results_baseline_5models.json`.
 | qwen2.5-coder:3b | 0.196 | 0.153 | -0.043 |
 | granite3.3:2b | 0.266 | 0.264 | -0.002 |
 
-## Finding
+## Results
 
 **Chain-of-thought made every single model worse, on every single metric, no
 exceptions — now including a sixth model at 14B.** This is the opposite of what CoT is usually reached for. The
@@ -131,28 +131,6 @@ alone; they only show it together.
 ## Output
 
 ![output](docs/images/output.png)
-
-## Problems hit while building this
-
-- **`load_dataset("truthful_qa", ...)` doesn't resolve** on the installed
-  `datasets`/`huggingface_hub` versions — same class of break as HotpotQA's
-  loader elsewhere in this repo. Fixed by using the namespaced
-  `truthfulqa/truthful_qa` id.
-- **The real 2,000-call run was killed mid-flight** by an unrelated sibling
-  process's `taskkill //F //IM python.exe //FI "MEMUSAGE gt 50000"` (a
-  different project being built in parallel in this same repo checkout,
-  clearing its own stuck process and taking others down with it). Per-model,
-  per-100-call checkpointing was added to `run_eval.py` specifically so a
-  crash mid-run wouldn't lose progress or force fabricating results from a
-  partial run — the run was restarted and completed for real afterward
-  rather than reporting the killed run's partial numbers.
-- **MC2's official metric isn't reproducible against Ollama's plain
-  `/api/generate`** (no per-token log-probabilities for arbitrary option
-  text) — documented as a heuristic stand-in rather than silently presenting
-  an approximation as the real published metric.
-
-
----
 
 ## How it works
 

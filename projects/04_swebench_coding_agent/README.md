@@ -40,7 +40,7 @@ extensions, so a plain `python:3.11-slim` sandbox suffices):
 - `psf__requests-3362` — `Response.iter_content(decode_unicode=True)` fails on
   an empty body.
 
-## Result: both model patches failed to apply — and why that's the finding
+## Result: both model patches failed to apply
 
 | instance | retrieved file(s) | model patch | `git apply` result |
 |---|---|---|---|

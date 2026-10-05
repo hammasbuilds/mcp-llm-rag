@@ -1,6 +1,6 @@
 """Run the real BFCL tool-calling accuracy evaluation across the local Ollama fleet.
 
-Usage (from repo root, D:\\github\\mcp-lab)::
+Usage (from the repo root)::
 
     uv run python projects/03_bfcl_tool_calling/run_eval.py
 

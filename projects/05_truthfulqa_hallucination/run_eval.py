@@ -1,6 +1,6 @@
 """Hallucination-rate harness: TruthfulQA (multiple_choice) x local Ollama fleet.
 
-Run from the repo root (D:\\github\\mcp-lab):
+Run from the repo root:
 
     uv run python projects/05_truthfulqa_hallucination/run_eval.py --n 100 --seed 42
 

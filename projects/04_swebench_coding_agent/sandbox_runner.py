@@ -71,7 +71,7 @@ def build_image(quiet: bool = False) -> None:
 def _docker_run(eval_dir: Path, script: str, timeout: int = 600) -> subprocess.CompletedProcess:
     """Run `script` with bash inside the sandbox container, with eval_dir
     bind-mounted read-write at /workspace."""
-    # Docker Desktop on Windows expects a path like //d/github/... or D:\...;
+    # Docker Desktop on Windows expects a path like //c/src/... or C:\...;
     # -v with an absolute Windows path works via Docker Desktop's path translation.
     mount = f"{eval_dir.resolve()}:/workspace"
     cmd = [

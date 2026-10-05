@@ -1,6 +1,6 @@
 """FEVER fact-verification agent: real dataset x real retrieval x real local Ollama verdicts.
 
-Run from the repo root (D:\\github\\mcp-lab):
+Run from the repo root:
 
     uv run python projects/06_fever_fact_verification/run_eval.py --n-per-label 20 --seed 42
 
